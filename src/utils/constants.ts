@@ -9,10 +9,10 @@ type MetalProps = {
 export const WhatsappBaseUrl = `https://api.whatsapp.com/send/?phone=79199947355`;
 
 export const metalOptions: MetalProps[] = [
-  { label: 'меди', price: 777, name: 'copper' },
-  { label: 'кабеля', price: 666, name: 'cables' },
-  { label: 'латуни', price: 444, name: 'brass' },
-  { label: 'бронзы', price: 555, name: 'bronze' },
+  { label: 'меди', price: 999, name: 'copper' },
+  { label: 'кабеля', price: 888, name: 'cables' },
+  { label: 'латуни', price: 666, name: 'brass' },
+  { label: 'бронзы', price: 777, name: 'bronze' },
   { label: 'алюминия', price: 222, name: 'aluminium' },
   { label: 'банки', price: 88.8, name: 'can' },
   { label: 'нержавейки', price: 55.5, name: 'stainless' },
@@ -22,11 +22,11 @@ export const metalOptions: MetalProps[] = [
   { label: 'титана', price: 200, name: 'titanium' },
   { label: 'олова', price: 2700, name: 'stannum' },
   { label: 'поса', price: 2600, name: 'pos' },
-  { label: 'быстрореза', price: 400, name: 'hss' },
+  { label: 'быстрореза', price: 888, name: 'hss' },
   { label: 'нихрома', price: 800, name: 'nichrome' },
   { label: 'тантала', price: 18000, name: 'tantalum' },
   { label: 'молибдена', price: 3750, name: 'molybdenum' },
-  { label: 'вк/тк', price: 1850, name: 'tungsten' },
+  { label: 'вк/тк', price: 8888, name: 'tungsten' },
   { label: 'ниобия', price: 3100, name: 'niobium' },
   { label: 'кобальта', price: 950, name: 'cobalt' },
   { label: 'висмута', price: 600, name: 'bismuth' },
