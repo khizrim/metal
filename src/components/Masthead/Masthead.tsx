@@ -1,17 +1,20 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { Level } from '~/components/Level/Level';
-import { metalOptions, WhatsappBaseUrl } from '~/utils/constants';
+import { WhatsappBaseUrl } from '~/utils/constants';
+import { metalIds, metals } from '~/prices/catalog';
 import { MetalImage } from '~/components/MetalImage/MetalImage';
 import typo from 'ru-typo';
 import { calculateTotal } from '~/utils/calc-total';
 import { CTAButtons } from '~/components/CTAButtons';
+import type { MastheadProps } from './Masthead.types';
 
-export const Masthead = component$(() => {
+const metalOptions = metalIds.map((name) => ({ name, label: metals[name].label }));
+
+export const Masthead = component$<MastheadProps>((props) => {
   // 1. Серверная инициализация
   const defaultWeight = 5;
   const defaultMetalLabel = metalOptions[0]?.label || '';
-  const defaultMetal = metalOptions.find((m) => m.label === defaultMetalLabel)!;
-  const initialTotal = calculateTotal(defaultWeight, defaultMetal.price, { variation: false });
+  const initialTotal = props.prices ? calculateTotal(defaultWeight, props.prices.copper, { variation: false }) : 0;
 
   // 2. Сигналы состояния
   const autoUpdateTimer = useSignal<ReturnType<typeof setInterval> | null>(null);
@@ -38,17 +41,19 @@ export const Masthead = component$(() => {
   useVisibleTask$(({ track }) => {
     track(() => weight.value);
     track(() => selectedMetal.value);
+    track(() => props.prices);
 
     const w = parseFloat(weight.value) || 0;
-    const metal = metalOptions.find((m) => m.label === selectedMetal.value)!;
+    const metal = metalOptions.find((option) => option.label === selectedMetal.value);
+    const price = metal && props.prices ? props.prices[metal.name] : 0;
 
     if (firstClientRun.value) {
       firstClientRun.value = false;
       // повторяем серверный расчёт — без вариации
-      total.value = calculateTotal(w, metal.price, { variation: false });
+      total.value = calculateTotal(w, price, { variation: false });
     } else {
       // дальнейшие — с вариацией ±3%
-      total.value = calculateTotal(w, metal.price, {
+      total.value = calculateTotal(w, price, {
         variation: true,
         variationPercent: 0.03,
       });
@@ -182,7 +187,7 @@ export const Masthead = component$(() => {
 
             {/* Итоговая цена */}
             <span>
-              до <span class="text-red-500">{total.value.toLocaleString('ru-RU')}</span> ₽
+              {props.prices ? <>до <span class="text-red-500">{total.value.toLocaleString('ru-RU')}</span> ₽</> : <span>Цену уточните по телефону</span>}
             </span>
           </div>
 

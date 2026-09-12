@@ -1,5 +1,7 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
+import { readPublicPrices } from '~/prices/netlify.server';
 import { Masthead } from '~/components/Masthead';
 import { WhatWeAccept } from '~/components/WhatWeAccept';
 import { OurApproach } from '~/components/OurApproach';
@@ -8,10 +10,18 @@ import { HowWeWork } from '~/components/HowWeWork';
 import { YandexReviews } from '~/components/YandexReviews';
 import { MapWithLocation } from '~/components/MapWithLocation';
 
+export const usePrices = routeLoader$(async (event) => {
+  event.headers.set('Cache-Control', 'no-store');
+  event.headers.set('CDN-Cache-Control', 'no-store');
+  event.headers.set('Netlify-CDN-Cache-Control', 'no-store');
+  return readPublicPrices(event.platform.deploy);
+});
+
 export default component$(() => {
+  const prices = usePrices();
   return (
     <>
-      <Masthead />
+      <Masthead prices={prices.value} />
       <WhatWeAccept />
       <OurApproach />
       <WhyChooseUs />
