@@ -1,7 +1,7 @@
 document.querySelectorAll('form[method="post"]').forEach((form) => {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const body = Object.fromEntries(new FormData(form).entries());
+    const body = Object.fromEntries(new FormData(form, event.submitter).entries());
     const response = await fetch(form.getAttribute('action') ?? window.location.href, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
