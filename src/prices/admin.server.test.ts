@@ -24,7 +24,7 @@ const createBrowser = () => {
     if (fields && !headers.has('Origin')) headers.set('Origin', origin);
     const response = await handleAdminRequest(new Request(`${origin}${requestPath}`, {
       method: fields ? 'POST' : 'GET', ...overrides, headers,
-      body: fields ? new URLSearchParams(fields) : undefined,
+      body: fields ? headers.get('Content-Type')?.startsWith('application/json') ? JSON.stringify(fields) : new URLSearchParams(fields) : undefined,
     }), { config, store, ip: 'test-ip' });
     for (const cookie of response.headers.getSetCookie()) {
       const pair = cookie.split(';')[0] ?? '';
@@ -89,6 +89,16 @@ describe('owner cabinet HTTP flow', () => {
     expect((await browser.request(fields, { headers: { Origin: 'https://attacker.test' } })).status).toBe(403);
     expect((await browser.request(fields, { headers: { 'Sec-Fetch-Site': 'cross-site' } })).status).toBe(403);
     expect((await createPriceRepository(browser.store).read()).prices).toEqual(initialPrices);
+  });
+
+  it('accepts an opaque origin only with a valid signed CSRF token', async () => {
+    const browser = createBrowser();
+    await browser.login();
+    const fields = await browser.priceFields();
+    const response = await browser.request(fields, { headers: { Origin: 'null', 'Content-Type': 'application/json' } });
+    expect(response.status).toBe(303);
+    expect((await createPriceRepository(browser.store).read()).prices.copper).toBe(999);
+    expect((await browser.request({ ...fields, csrf: '' }, { headers: { Origin: 'null', 'Content-Type': 'application/json' } })).status).toBe(403);
   });
 
   it('keeps invalid input visible, escapes HTML and requires confirmation for restore', async () => {

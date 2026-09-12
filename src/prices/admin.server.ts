@@ -2,6 +2,7 @@ import { renderAdminPage } from './admin-page.server';
 import type { AdminDependencies, AdminPage } from './admin.types';
 import { createSession, isPasswordHash, verifyPassword, verifySession } from './auth.server';
 import { metalIds } from './catalog';
+import { isRecord } from './prices';
 import { allowLoginAttempt } from './rate-limit.server';
 import { createPriceRepository } from './repository.server';
 import type { PriceDocument } from './prices.types';
@@ -14,11 +15,12 @@ const privateHeaders = {
   'Referrer-Policy': 'no-referrer',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
-  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
 };
 
 const readForm = async (request: Request): Promise<URLSearchParams | null> => {
-  if (!request.headers.get('content-type')?.startsWith('application/x-www-form-urlencoded')) return null;
+  const contentType = request.headers.get('content-type') ?? '';
+  if (!contentType.startsWith('application/x-www-form-urlencoded') && !contentType.startsWith('application/json')) return null;
   if (Number(request.headers.get('content-length')) > 8192) return null;
   const reader = request.body?.getReader();
   if (!reader) return null;
@@ -33,6 +35,20 @@ const readForm = async (request: Request): Promise<URLSearchParams | null> => {
     text += decoder.decode(chunk.value, { stream: true });
   }
   text += decoder.decode();
+  if (contentType.startsWith('application/json')) {
+    try {
+      const value: unknown = JSON.parse(text);
+      if (!isRecord(value)) return null;
+      const form = new URLSearchParams();
+      for (const [key, entry] of Object.entries(value)) {
+        if (typeof entry !== 'string') return null;
+        form.append(key, entry);
+      }
+      return form;
+    } catch {
+      return null;
+    }
+  }
   const form = new URLSearchParams(text);
   if (Array.from(form.keys()).some((key) => form.getAll(key).length !== 1)) return null;
   return form;
@@ -77,7 +93,8 @@ export const handleAdminRequest = async (request: Request, dependencies: AdminDe
       return page({ document: currentDocument, message: url.searchParams.has('saved') ? 'Цены сохранены и опубликованы.' : url.searchParams.has('restored') ? 'Предыдущие цены возвращены.' : undefined });
     }
     if (request.method !== 'POST') { headers.set('Allow', 'GET, HEAD, POST'); return text('Метод не поддерживается', 405); }
-    if (request.headers.get('origin') !== url.origin || request.headers.get('sec-fetch-site') === 'cross-site') return text('Недопустимый источник запроса', 403);
+    const origin = request.headers.get('origin');
+    if ((origin !== null && origin !== 'null' && origin !== url.origin) || request.headers.get('sec-fetch-site') === 'cross-site') return text('Недопустимый источник запроса', 403);
     const form = await readForm(request);
     if (!form) return text('Неверный формат запроса', 400);
     if (!csrfValid || form.get('csrf') !== csrf) return page({ message: 'Сессия формы истекла. Откройте кабинет заново.', error: true }, 403);
