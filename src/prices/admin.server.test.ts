@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { handleAdminRequest } from './admin.server';
@@ -46,6 +48,11 @@ const createBrowser = () => {
 };
 
 describe('owner cabinet HTTP flow', () => {
+  it('serializes the button that submitted an asynchronous form', async () => {
+    const script = await readFile(new URL('../../public/admin-form.js', import.meta.url), 'utf8');
+    expect(script).toContain('new FormData(form, event.submitter)');
+  });
+
   it('hides the editor before login and disables indexing, caching and framing', async () => {
     const browser = createBrowser();
     const response = await browser.request();
