@@ -53,6 +53,7 @@ describe('owner cabinet HTTP flow', () => {
     expect(response.headers.get('Cache-Control')).toContain('no-store');
     expect(response.headers.get('X-Robots-Tag')).toContain('noindex');
     expect(response.headers.get('Content-Security-Policy')).toContain("frame-ancestors 'none'");
+    expect(response.headers.get('Content-Security-Policy')).toContain("connect-src 'self'");
     expect(response.headers.get('Referrer-Policy')).toBe('no-referrer');
     expect(response.headers.get('Set-Cookie')).toContain('HttpOnly');
     const html = await response.text();
